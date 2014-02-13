@@ -7,15 +7,82 @@
 //
 
 #import "AppDelegate.h"
+#import "IIViewDeckController.h"
 
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     // Override point for customization after application launch.
+    [self createCopyOfDatabaseIfNeeded];
+    
+    UIStoryboard* mainStoryboard = [UIStoryboard storyboardWithName:@"Main" bundle: nil];
+    
+    
+    UIViewController* menuController = [mainStoryboard instantiateViewControllerWithIdentifier:@"leftVC"];
+    
+    UINavigationController* navigationController = (UINavigationController *) self.window.rootViewController;
+    
+    IIViewDeckController* viewDeckController =  [[IIViewDeckController alloc] initWithCenterViewController:navigationController
+                                                                                        leftViewController:menuController
+                                                                                       rightViewController:nil];
+    
+    self.window.rootViewController = viewDeckController;
     return YES;
 }
-							
+
+// Function to Create a writable copy of the bundled default database in the application Documents directory.
+- (void)createCopyOfDatabaseIfNeeded {
+    // First, test for existence.
+    @try {
+        
+        BOOL success;
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+        NSError *error;
+        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+        // Database filename can have extension db/sqlite.
+        NSString *documentsDirectory = [paths objectAtIndex:0];
+        NSString *appDBPath = [documentsDirectory stringByAppendingPathComponent:@"tuvi2014-db-main.sqlite"];
+        
+        success = [fileManager fileExistsAtPath:appDBPath];
+        if (success){
+            return;
+        }
+        // The writable database does not exist, so copy the default to the appropriate location.
+        
+        
+        
+        //NSString *defaultDBPath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"tuvi2014-db-main.sqlite"];
+        
+        NSString *filePath = [[NSBundle mainBundle] pathForResource:@"tuvi2014-db-main" ofType:@"sqlite"];
+        
+        if (![fileManager fileExistsAtPath:filePath])  {
+            NSLog(@"file doesn't exist");
+            // file doesn't exist
+        } else {
+            NSLog(@"file exist");
+        }
+        
+        success = [fileManager copyItemAtPath:filePath toPath:appDBPath error:&error];
+        if (!success) {
+            NSAssert1(0, @"Failed to create writable database file with message '%@'.", [error localizedDescription]);
+        }
+        if (![fileManager fileExistsAtPath:appDBPath])  {
+            NSLog(@"file doesn't exist");
+            // file doesn't exist
+        } else {
+            NSLog(@"file exist");
+        }
+        
+    }
+    @catch (NSException *exception) {
+        NSLog(@"%@", exception.reason);
+    }
+    @finally {
+        
+    }
+}
+
 - (void)applicationWillResignActive:(UIApplication *)application
 {
     // Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
